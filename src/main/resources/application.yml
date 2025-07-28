@@ -1,0 +1,41 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: protocol-server
+
+netty:
+  port: 10003
+  boss-threads: 1
+  worker-threads: 0  # 0 表示使用 CPU 核心数 * 2
+  so-backlog: 128
+  keep-alive: true
+  tcp-no-delay: true
+  read-timeout: 60   # 秒
+  write-timeout: 60  # 秒
+  max-frame-length: 1048576  # 1MB
+
+protocol:
+  max-message-length: 65535
+  enable-crc-check: true
+  buffer-size: 4096
+
+logging:
+  level:
+    com.example.protocol: DEBUG
+    io.netty: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: logs/protocol-server.log
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
