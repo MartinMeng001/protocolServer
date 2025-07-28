@@ -28,6 +28,9 @@ public class ProtocolController {
     private final ProtocolService protocolService;
     private final ConnectionManager connectionManager;
 
+    /**
+     * 发送消息到指定连接
+     */
     @PostMapping("/send")
     public ResponseEntity<MessageResponse> sendMessage(@Valid @RequestBody MessageRequest request) {
         log.info("API request to send message to connection: {}", request.getConnectionId());
@@ -35,27 +38,33 @@ public class ProtocolController {
         boolean success = protocolService.sendMessage(request.getConnectionId(), request.getMessage());
 
         if (success) {
-            return ResponseEntity.ok(MessageResponse.success("Message sent successfully"));
+            return ResponseEntity.ok(MessageResponse.success("消息发送成功"));
         } else {
             return ResponseEntity.badRequest()
-                    .body(MessageResponse.error("Failed to send message. Connection not found or inactive."));
+                    .body(MessageResponse.error("消息发送失败，连接不存在或不活跃"));
         }
     }
 
+    /**
+     * 广播消息到所有连接
+     */
     @PostMapping("/broadcast")
     public ResponseEntity<MessageResponse> broadcastMessage(@Valid @RequestBody BroadcastRequest request) {
         log.info("API request to broadcast message");
 
         try {
             protocolService.broadcastMessage(request.getMessage());
-            return ResponseEntity.ok(MessageResponse.success("Message broadcasted successfully"));
+            return ResponseEntity.ok(MessageResponse.success("消息广播成功"));
         } catch (Exception e) {
             log.error("Error broadcasting message", e);
             return ResponseEntity.internalServerError()
-                    .body(MessageResponse.error("Failed to broadcast message: " + e.getMessage()));
+                    .body(MessageResponse.error("消息广播失败: " + e.getMessage()));
         }
     }
 
+    /**
+     * 获取所有连接信息
+     */
     @GetMapping("/connections")
     public ResponseEntity<MessageResponse> getConnections() {
         try {
@@ -68,7 +77,7 @@ public class ProtocolController {
                                     id,
                                     channel.remoteAddress().toString(),
                                     channel.isActive(),
-                                    System.currentTimeMillis() // 简化实现，实际应该记录连接时间
+                                    System.currentTimeMillis() // 简化实现
                             );
                         }
                         return null;
@@ -76,14 +85,17 @@ public class ProtocolController {
                     .filter(info -> info != null)
                     .collect(Collectors.toList());
 
-            return ResponseEntity.ok(MessageResponse.success("Connections retrieved successfully", connections));
+            return ResponseEntity.ok(MessageResponse.success("连接信息获取成功", connections));
         } catch (Exception e) {
             log.error("Error retrieving connections", e);
             return ResponseEntity.internalServerError()
-                    .body(MessageResponse.error("Failed to retrieve connections: " + e.getMessage()));
+                    .body(MessageResponse.error("获取连接信息失败: " + e.getMessage()));
         }
     }
 
+    /**
+     * 获取连接总数
+     */
     @GetMapping("/connections/count")
     public ResponseEntity<MessageResponse> getConnectionCount() {
         try {
@@ -91,14 +103,17 @@ public class ProtocolController {
             Map<String, Object> data = new HashMap<>();
             data.put("count", count);
 
-            return ResponseEntity.ok(MessageResponse.success("Connection count retrieved successfully", data));
+            return ResponseEntity.ok(MessageResponse.success("连接数获取成功", data));
         } catch (Exception e) {
             log.error("Error retrieving connection count", e);
             return ResponseEntity.internalServerError()
-                    .body(MessageResponse.error("Failed to retrieve connection count: " + e.getMessage()));
+                    .body(MessageResponse.error("获取连接数失败: " + e.getMessage()));
         }
     }
 
+    /**
+     * 获取指定连接状态
+     */
     @GetMapping("/connections/{connectionId}/status")
     public ResponseEntity<MessageResponse> getConnectionStatus(@PathVariable String connectionId) {
         try {
@@ -114,29 +129,32 @@ public class ProtocolController {
                 status.put("localAddress", channel.localAddress().toString());
             }
 
-            return ResponseEntity.ok(MessageResponse.success("Connection status retrieved successfully", status));
+            return ResponseEntity.ok(MessageResponse.success("连接状态获取成功", status));
         } catch (Exception e) {
             log.error("Error retrieving connection status", e);
             return ResponseEntity.internalServerError()
-                    .body(MessageResponse.error("Failed to retrieve connection status: " + e.getMessage()));
+                    .body(MessageResponse.error("获取连接状态失败: " + e.getMessage()));
         }
     }
 
+    /**
+     * 关闭指定连接
+     */
     @DeleteMapping("/connections/{connectionId}")
     public ResponseEntity<MessageResponse> closeConnection(@PathVariable String connectionId) {
         try {
             Channel channel = connectionManager.getConnection(connectionId);
             if (channel != null) {
                 channel.close();
-                return ResponseEntity.ok(MessageResponse.success("Connection closed successfully"));
+                return ResponseEntity.ok(MessageResponse.success("连接关闭成功"));
             } else {
                 return ResponseEntity.badRequest()
-                        .body(MessageResponse.error("Connection not found"));
+                        .body(MessageResponse.error("连接不存在"));
             }
         } catch (Exception e) {
             log.error("Error closing connection", e);
             return ResponseEntity.internalServerError()
-                    .body(MessageResponse.error("Failed to close connection: " + e.getMessage()));
+                    .body(MessageResponse.error("关闭连接失败: " + e.getMessage()));
         }
     }
 }

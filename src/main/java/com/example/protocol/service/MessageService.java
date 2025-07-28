@@ -15,16 +15,19 @@ import java.nio.charset.StandardCharsets;
 public class MessageService {
 
     private final ResponseService responseService;
+    private final JsonDataProcessor jsonDataProcessor;
 
     public void handleMessage(ProtocolMessage message, ChannelHandlerContext ctx) {
         try {
             // 记录接收到的消息
-            String dataStr = new String(message.getData(), StandardCharsets.UTF_8);
-            log.info("Received message from {}: {}",
-                    ctx.channel().remoteAddress(), dataStr);
+            String connectionId = message.getConnectionId();
+            byte[] data = message.getData();
 
-            // 处理业务逻辑
-            String response = processMessage(dataStr, message.getConnectionId());
+            log.info("Received message from {}: {} bytes",
+                    ctx.channel().remoteAddress(), data.length);
+
+            // 处理JSON数据
+            String response = jsonDataProcessor.processJsonData(data, connectionId);
 
             // 发送响应
             if (response != null) {

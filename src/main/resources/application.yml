@@ -6,7 +6,7 @@ spring:
     name: protocol-server
 
 netty:
-  port: 8080
+  port: 10003
   boss-threads: 1
   worker-threads: 0  # 0 表示使用 CPU 核心数 * 2
   so-backlog: 128

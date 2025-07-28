@@ -8,7 +8,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "netty")
 @Data
 public class NettyConfig {
-    private int port = 8080;
+    private int port = 10003;
     private int bossThreads = 1;
     private int workerThreads = 0; // 0 表示使用默认值
     private int soBacklog = 128;

@@ -1,8 +1,10 @@
 package com.example.protocol.server.manager;
 
+import com.example.protocol.service.DeviceService;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelId;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ConcurrentHashMap;
@@ -14,6 +16,11 @@ import java.util.Set;
 public class ConnectionManager {
 
     private final ConcurrentMap<String, Channel> connections = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, String> connectionDeviceMapping = new ConcurrentHashMap<>();
+
+    @Autowired
+    @Lazy
+    private DeviceService deviceService;
 
     public void addConnection(String connectionId, Channel channel) {
         connections.put(connectionId, channel);
@@ -24,6 +31,12 @@ public class ConnectionManager {
         Channel channel = connections.remove(connectionId);
         if (channel != null) {
             log.info("Connection removed: {} ({})", connectionId, channel.remoteAddress());
+
+            // 通知设备服务处理设备离线
+            String deviceId = connectionDeviceMapping.remove(connectionId);
+            if (deviceId != null && deviceService != null) {
+                deviceService.handleDeviceOffline(deviceId);
+            }
         }
     }
 
@@ -58,5 +71,24 @@ public class ConnectionManager {
                 channel.writeAndFlush(message);
             }
         });
+    }
+
+    /**
+     * 建立连接ID与设备ID的映射关系
+     */
+    public void mapConnectionToDevice(String connectionId, String deviceId) {
+        connectionDeviceMapping.put(connectionId, deviceId);
+        log.debug("Mapped connection {} to device {}", connectionId, deviceId);
+    }
+
+    /**
+     * 根据设备ID获取连接ID
+     */
+    public String getConnectionIdByDevice(String deviceId) {
+        return connectionDeviceMapping.entrySet().stream()
+                .filter(entry -> deviceId.equals(entry.getValue()))
+                .map(entry -> entry.getKey())
+                .findFirst()
+                .orElse(null);
     }
 }

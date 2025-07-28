@@ -23,4 +23,8 @@ public class MessageResponse {
     public static MessageResponse error(String message) {
         return new MessageResponse(false, message, null);
     }
+
+    public static MessageResponse error(String message, Object data) {
+        return new MessageResponse(false, message, data);
+    }
 }
